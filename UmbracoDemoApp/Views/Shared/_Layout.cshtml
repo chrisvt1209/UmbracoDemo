@@ -1,4 +1,14 @@
-﻿<!DOCTYPE html>
+﻿@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Extensions
+@inject Umbraco.Cms.Web.Common.UmbracoHelper Umbraco
+
+@{
+    var home = Umbraco.ContentAtRoot().FirstOrDefault();
+    var navItems = home?.Children()?.Where(x => x.IsPublished()) ?? Enumerable.Empty<IPublishedContent>();
+    var currentPath = Context.Request.Path.Value?.TrimEnd('/') ?? string.Empty;
+}
+
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8" />
@@ -13,18 +23,25 @@
         <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm mb-3">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="#">CVT</a>
+                    <a class="navbar-brand" href="@home!.Url()">CVT</a>
                     <div class="navbar-collapse collapse justify-content-center">
                         <ul class="navbar-nav mb-2 mb-md-0">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Nav 1</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Nav 2</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Nav 3</a>
-                            </li>
+                            @foreach (var item in navItems)
+                            {
+                                var itemUrl = item.Url();
+
+                                var itemPath = new Uri(itemUrl, UriKind.RelativeOrAbsolute).IsAbsoluteUri
+                                    ? new Uri(itemUrl).AbsolutePath.TrimEnd('/')
+                                    : itemUrl.TrimEnd('/');
+
+                                var activeClass = string.Equals(currentPath, itemPath, StringComparison.OrdinalIgnoreCase)
+                                    ? "active"
+                                    : string.Empty;
+
+                                <li class="nav-item">
+                                    <a class="nav-link" @activeClass href="@itemUrl">@item.Name</a>
+                                </li>
+                            }
                         </ul>
                     </div>
                 </div>
